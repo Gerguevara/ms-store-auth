@@ -26,7 +26,7 @@ async function bootstrap() {
 
   await app.listen();
   logger.log(
-    `Auth Micro Service running on http://localhost:${env.port} 🚀`,
+    `Auth Micro Service running 🚀`,
   );
 }
 bootstrap();

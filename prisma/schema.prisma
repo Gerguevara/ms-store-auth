@@ -1,0 +1,32 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+/// `@map("_id")` annotation is used to specify that the `id` field
+/// should be mapped to a column named `_id` in the database table. The `@db.ObjectId`
+/// annotation is used to indicate that the `id` field should be treated as an ObjectId
+/// type in MongoDB.
+
+// to conect to Mongo using primas is no required to do a migration only building the client with the command
+// `npx prisma generate` and then you can use the client to interact with the database.
+model User {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  email    String @unique
+  name     String
+  password String
+}
+
+
+
+
