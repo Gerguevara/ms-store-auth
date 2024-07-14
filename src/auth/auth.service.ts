@@ -6,6 +6,7 @@ import { RpcException } from '@nestjs/microservices';
 import * as argon2 from 'argon2';
 import { JwtService } from '@nestjs/jwt';
 import { JWTPayload } from './type/jwtPayload';
+import { env } from 'src/config';
 
 @Injectable()
 export class AuthService extends PrismaClient implements OnModuleInit {
@@ -104,8 +105,26 @@ export class AuthService extends PrismaClient implements OnModuleInit {
     }
   }
 
-  verify() {
-    return 'This action adds a Register Auth';
+  // verica el token y devuelve un nuevo token junto con el usuario
+  async verifyToken(token: string) {
+    try {
+      const { sub, iat, exp, ...user } = this.jwtService.verify(token, {
+        secret: env.jwtSecret,
+      });
+
+      return {
+        user: user,
+        token: await this.signJWT(user),
+      }
+
+    } catch (error) {
+      console.log(error);
+      throw new RpcException({
+        status: 401,
+        message: 'Invalid token'
+      })
+    }
+
   }
 
   async signJWT(payload: JWTPayload) {
