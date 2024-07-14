@@ -1,16 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Logger, OnModuleInit, Injectable } from '@nestjs/common';
+import { Logger, OnModuleInit, Injectable, Inject } from '@nestjs/common';
 import { LoginUserDto, RegisterUserDto } from './dto';
 import { PrismaClient } from '@prisma/client';
 import { RpcException } from '@nestjs/microservices';
 import * as argon2 from 'argon2';
+import { JwtService } from '@nestjs/jwt';
+import { JWTPayload } from './type/jwtPayload';
 
 @Injectable()
 export class AuthService extends PrismaClient implements OnModuleInit {
 
-  private logger = new Logger('AuthService');
+  private readonly logger = new Logger('AuthService');
+  u
 
-  constructor() {
+  constructor(private readonly jwtService: JwtService) {
     super();
   }
 
@@ -21,7 +24,6 @@ export class AuthService extends PrismaClient implements OnModuleInit {
 
 
   async register(registerUserDto: RegisterUserDto) {
-    this.logger.log('registerUser');
     const { email, name, password } = registerUserDto;
 
     try {
@@ -32,12 +34,13 @@ export class AuthService extends PrismaClient implements OnModuleInit {
       });
 
       if (user) {
-        this.logger.log('duplicated user', user);
+
         throw new RpcException({
           status: 400,
           message: 'User already exists',
         });
       }
+
 
       const hashedPassword = await argon2.hash(password);
       const newUser = await this.user.create({
@@ -48,12 +51,12 @@ export class AuthService extends PrismaClient implements OnModuleInit {
         },
       });
 
-      this.logger.log('newUser: ', newUser);
+
       const { password: __, ...rest } = newUser;
 
       return {
         user: rest,
-        token: 'token',
+        token:  await this.signJWT(rest)
       };
     } catch (error) {
       throw new RpcException({
@@ -87,12 +90,11 @@ export class AuthService extends PrismaClient implements OnModuleInit {
           message: 'User/Password not valid',
         });
       }
-
       const { password: __, ...rest } = user;
-
+      console.log(rest)
       return {
         user: rest,
-        token: 'token',
+        token: await this.signJWT(rest)
       };
     } catch (error) {
       throw new RpcException({
@@ -104,6 +106,10 @@ export class AuthService extends PrismaClient implements OnModuleInit {
 
   verify() {
     return 'This action adds a Register Auth';
+  }
+
+  async signJWT(payload: JWTPayload) {
+    return this.jwtService.sign(payload);
   }
 }
 
